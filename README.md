@@ -1,6 +1,8 @@
 # Computing Statistical Coefficient Significativity
 
-This project contains a site that computes Cohen's kappa, IA*, and their significativity.
+This project contains a site that computes Cohen's kappa, IA*, and their significativities.
+
+You can test the site [here](https://albertocasagrande.github.io/significativity/).
 
 ## License
 
