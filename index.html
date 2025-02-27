@@ -1,0 +1,1274 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/gh/pcooksey/bibtex-js@1.0.0/src/bibtex_js.min.js"></script>
+
+    <script src='https://cdn.jsdelivr.net/npm/bignumber.js@9.1.2/bignumber.min.js'></script>
+
+    <script src='js/stat_coeffs.js'></script>
+    <script type='module' src='js/significativity.js'></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+        integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
+
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"
+        integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh"
+        crossorigin="anonymous"></script>
+
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+        integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+</head>
+
+<body>
+
+
+    <div id="overlay" style="display:none;">
+        <div id="modal">
+            <p>Computing <span class="matrix_class"></span>-significativity...</p>
+            <div class="progress-container">
+                <svg class="circular-progress" width="150" height="150" viewBox="0 0 150 150">
+                    <circle class="circle-background" cx="75" cy="75" r="70"></circle>
+                    <circle id="circle" class="circle-progress" cx="75" cy="75" r="70"></circle>
+                </svg>
+                <div class="percentage" id="percentage">0%</div>
+            </div>
+            <div id="timer">0:00</div>
+        </div>
+    </div>
+
+    <!-- Tab links -->
+    <div class="tab">
+        <button class="tablinks" onclick="selectTab(event, 'Compute')" id="defaultTab">Compute</button>
+        <button class="tablinks" onclick="selectTab(event, 'Manual')">How to</button>
+        <button class="tablinks" onclick="selectTab(event, 'References')">References</button>
+    </div>
+
+    <!-- Tab content -->
+    <div id="Compute" class="tabcontent">
+        <table>
+            <tr>
+                <td>
+                    <textarea cols="80" rows="10" id="data_text"></textarea>
+                </td>
+                <td style="width:100%" align="center" id="am_cell"></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" id="matrix" name="matrix_chk">
+                    <span for="matrix">The input is a confusion matrix</span>
+                </td>
+                <td style="width:100%" align="center" class="when_matrix">
+                    <input type="checkbox" id="total_in_matrix" name="total_in_matrix_chk">
+                    <span for="total_in_matrix">Show the row/column totals</span>
+                </td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" id="matrix_header" name="header_chk">
+                    <span for="matrix_header">The 1st line contains classifier names</span>
+                </td>
+                <td></td>
+            </tr>
+            <tr class="matrix_only">
+                <td><input type="checkbox" id="matrix_first_line" name="first_line_chk">
+                    <span for="matrix_first_line" id="matrix_first_line_label">The 1st line contains rates</span>
+                </td>
+                <td></td>
+            </tr>
+            <tr class="matrix_only">
+                <td><input type="checkbox" id="matrix_first_col" name="first_col_chk">
+                    <span for="matrix_first_col">The 1st column contains rates</span>
+                </td>
+                <td></td>
+            </tr>
+        </table><br>
+
+        <select id="sigma_selector">
+        </select><br><br>
+
+        <div>
+            <input type="submit" value="Calculate" onclick="compute()">
+        </div>
+
+        <div>
+            <p id="sigma_paragraph" hidden><b><span class="sigma_name"></span>:</b> <span class="sigma_value"></span>
+                <span id="varrho_paragraph">(<span class="matrix_class"></span>-significativity w.r.t.
+                    <span class="sigma_name"></span> is <span id="varrho"></span>)
+                </span>
+            </p>
+            <div class="text-center"><canvas width="800" height="90" id="significativity_scale"></canvas></div>
+        </div>
+
+    </div>
+
+    <div id="Manual" class="tabcontent">
+        <h3>How to</h3>
+        <p>Fill the text area in the main page as suggested by the following examples.</p>
+
+        <table id="Examples">
+            <tr>
+                <td>Data example</td>
+                <td>
+                    <input type="submit" value="Fill&Evaluate" onclick="dataExample()">
+                </td>
+            </tr>
+            <tr>
+                <td>Data example with classifiers</td>
+                <td>
+                    <input type="submit" value="Fill&Evaluate" onclick="dataExample(true)">
+                </td>
+            </tr>
+            <tr>
+                <td>Confusion matrix example</td>
+                <td>
+                    <input type="submit" value="Fill&Evaluate" onclick="matrixExample()">
+                </td>
+            </tr>
+            <tr>
+                <td>Confusion matrix example with classifiers</td>
+                <td>
+                    <input type="submit" value="Fill&Evaluate" onclick="matrixExample(true)">
+                </td>
+            </tr>
+            <tr>
+                <td>Confusion matrix example with classifiers and rates</td>
+                <td>
+                    <input type="submit" value="Fill&Evaluate" onclick="matrixExample(true,true)">
+                </td>
+            </tr>
+            <tr>
+                <td>Confusion matrix example with classifiers and rates 2</td>
+                <td>
+                    <input type="submit" value="Fill&Evaluate" onclick="matrixExample(true,true,true)">
+                </td>
+            </tr>
+            <tr>
+                <td>Confusion matrix example with rates</td>
+                <td>
+                    <input type="submit" value="Fill&Evaluate" onclick="matrixExample(false,true,true)">
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="References" class="tabcontent">
+        <h3>References</h3>
+
+        <textarea id="bibtex_input" style="display:none;">
+
+    @article{CFG2024,
+        author = {Casagrande, Alberto and Fabris, Francesco and Girometti, Rossano},
+        doi = {10.1007/s13721-024-00493-y},
+        isbn = {2192-6670},
+        journal = {Network Modeling Analysis in Health Informatics and Bioinformatics},
+        number = {1},
+        pages = {12},
+        title = {A prevalence-robust measure of diagnostic test performance},
+        volume = {14},
+        year = {2024}}
+    
+    @article{CFG2023,
+        author = {Casagrande, Alberto and Fabris, Francesco and Girometti, Rossano},
+        doi = {10.1186/s41747-023-00327-y},
+        journal = {European Radiology Experimental},
+        number = {1},
+        pages = {1--7},
+        publisher = {SpringerOpen},
+        title = {An information-oriented paradigm in evaluating accuracy and agreement in radiology},
+        volume = {7},
+        year = {2023}}
+
+    @article{CFG2022,
+        author = {Casagrande, Alberto and Fabris, Francesco and Girometti, Rossano},
+        doi = {10.1007/s11517-021-02494-9},
+        isbn = {1741-0444},
+        journal = {Medical \& Biological Engineering \& Computing},
+        number = {4},
+        pages = {941--955},
+        title = {Fifty years of Shannon information theory in assessing the accuracy and agreement of diagnostic tests},
+        url = {https://doi.org/10.1007/s11517-021-02494-9},
+        volume = {60},
+        year = {2022}}
+    
+    @article{CFG2020,
+        author = {Casagrande, Alberto and Fabris, Francesco and Girometti, Rossano},
+        doi = {10.1007/s11517-020-02261-2},
+        isbn = {1741-0444},
+        journal = {Medical \& Biological Engineering \& Computing},
+        number = {12},
+        pages = {3089--3099},
+        title = {Beyond kappa: an informational index for diagnostic agreement in dichotomous and multivalue ordered-categorical ratings},
+        url = {https://doi.org/10.1007/s11517-020-02261-2},
+        volume = {58},
+        year = {2020}}
+    </textarea>
+
+        <div id="bibtex_display">
+
+            <div class="if bibtex_template" style="display: none;">
+                <ul>
+                    <li>
+                        <span class="if title">
+                            <a class="url" target="_blank" extra="BIBTEXKEY">
+                                <span class="title"></span>,
+                            </a>
+                        </span>
+
+                        <div class="if author">
+                            <span class="author"></span>
+                        </div>
+                        <div>
+                            <span class="if journal"><em><span class="journal"></span></em></span>
+                            <span class="if number"><b><span class="number"></span></b>,</span>
+                            <span class="pages"></span>
+                            <span class="if year">(<span class="year"></span>)</span>
+                            <a class="bibtexVar" role="button" data-toggle="collapse" href="#bib+BIBTEXKEY+"
+                                aria-expanded="false" aria-controls="bib+BIBTEXKEY+" extra="BIBTEXKEY">
+                                [bib]
+                            </a>
+                        </div>
+                        <div class="bibtexVar collapse" id="bib+BIBTEXKEY+" extra="BIBTEXKEY">
+                            <div class="well">
+                                <pre><span class="bibtexraw noread"></span></pre>
+                            </div>
+                        </div>
+                        <div style="display:none">
+                            <span class="bibtextype"></span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* The following code is for the web application 
+           and it is not strictly related to the significativity */
+
+        /* the following functions are used to draw significativity scale
+           and marker */
+        var scale_labels = ['none', 'rare', 'slight', 'moderate',
+            'substantial'];
+
+        const numOfSamples = 10000;
+        const samples_per_batch = 100;
+        const num_of_workers = 4;
+
+        let startTime;
+        let timerInterval;
+
+        let in_set;
+        let worker;
+        let samples_collected;
+        let sigma_value;
+        let matrix_size;
+        let num_of_tests;
+        let num_of_batches;
+
+        function updateProgressBar(percentage) {
+            let progressCircle = document.getElementById('circle');
+            let percentageDisplay = document.getElementById('percentage');
+
+            let offset = 440 - (440 * percentage / 100);
+            progressCircle.style.strokeDashoffset = offset;
+            percentageDisplay.textContent = percentage + '%';
+        }
+
+
+        function updateTimer() {
+            const currentTime = new Date();
+            const elapsedTime = Math.floor((currentTime - startTime) / 1000); // in seconds
+
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+
+            document.getElementById("timer").textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        function round(value, decimals) {
+            return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+        }
+
+        function trunc(value, decimals) {
+            return Number(Math.trunc(value + 'e' + decimals) + 'e-' + decimals);
+        }
+
+        /* The following two functions directly derived from
+           the function pickTextColorBasedOnBgColorAdvanced in 
+           https://stackoverflow.com/a/41491220 */
+
+        function hexToRGB(hex_color) {
+            var color = (hex_color.charAt(0) === '#') ? hex_color.substring(1, 7) : hex_color;
+
+            var rgb = []
+            for (var i = 0; i < 3; i++) {
+                rgb[i] = parseInt(color.substring(0 + i * 2, 2 + i * 2), 16);
+            }
+
+            return rgb
+        }
+
+        function pickTextColorBasedOnBgColorAdvanced(bgColor, lightColor, darkColor) {
+            var rgb = hexToRGB(bgColor);
+            var c = rgb.map((col) => {
+                if (col <= 10.0164) {
+                    return col / 3294.6;
+                }
+                return Math.pow((col + 14.025) / 269.025, 2.4);
+            });
+            var L = (0.2126 * c[0]) + (0.7152 * c[1]) + (0.0722 * c[2]);
+            return (L > 0.3 ? darkColor : lightColor);
+        }
+
+        /* end of reference to https://stackoverflow.com/a/41491220 */
+
+        function perc2color(perc, colors = undefined) {
+
+            if (typeof (colors) === "undefined") {
+                colors = [[169, 158, 221],
+                [89, 211, 93],
+                [76, 175, 80]]
+            }
+
+            var level, step = 100 / (colors.length - 1);
+
+            if (perc == 100) {
+                level = colors.length - 1
+            } else {
+                level = Math.trunc(perc / step)
+            }
+
+            color_a = colors[level];
+            if (level < colors.length - 1) {
+                color_b = colors[level + 1];
+            } else {
+                color_b = colors[level];
+            }
+
+            var hex = '#';
+            perc = perc % step;
+            for (var i = 0; i < 3; i++) {
+                var comp = Math.round((color_b[i] * perc + color_a[i] * (step - perc)) / step);
+
+                hex += ('0' + comp.toString(16)).slice(-2)
+            }
+
+            return hex
+        }
+
+        function plot_scale(ctx, opts = undefined) {
+            if (typeof (opts) === "undefined") {
+                opts = {}
+            }
+            if (!('x_shift' in opts)) {
+                opts.x_shift = 0;
+            }
+            if (!('y_shift' in opts)) {
+                opts.y_shift = 0;
+            }
+            if (!('x_pad' in opts)) {
+                opts.x_pad = 20;
+            }
+            if (!('plot_label' in opts)) {
+                opts.plot_label = true;
+            }
+            if (!('font_size' in opts)) {
+                opts.font_size = 12;
+            }
+            if (!('y_pad' in opts)) {
+                opts.y_pad = (opts.plot_label ? opts.font_size : 0) + 5;
+            }
+            if (!('block_height' in opts)) {
+                opts.block_height = Math.max(20, 1.5 * opts.font_size);
+            }
+            if (!('labels' in opts)) {
+                opts.labels = ['none', 'rare', 'slight', 'moderate',
+                    'substantial'];
+            }
+            if (!('scale_width' in opts)) {
+                opts.scale_width = ctx.canvas.width - 2 * opts.x_pad;
+            }
+
+            var classes = opts.labels.length;
+            if (!('scale_colors' in opts)) {
+                opts.scale_colors = ['#a99edd',
+                    '#59d35d',
+                    '#4caf50'];
+            }
+            for (var i = 0; i < opts.scale_colors.length; i++) {
+                opts.scale_colors[i] = hexToRGB(opts.scale_colors[i])
+            }
+
+            for (var i = 0; i < classes; i++) {
+                opts.scale_colors[i] = perc2color((100 * i) / (classes - 1),
+                    colors = opts.scale_colors);
+            }
+
+            var y_pos = opts.y_pad + opts.y_shift;
+            var x_pos = opts.x_pad + opts.x_shift;
+            var end_of_scale = x_pos + opts.scale_width;
+            var y_blocks = y_pos;
+
+            var x_blocks = [];
+
+            for (var i = 0; i <= classes; i++) {
+                x_blocks[i] = x_pos + i * opts.scale_width / classes;
+            }
+
+            ctx.textBaseline = "middle";
+            ctx.textAlign = "center";
+            ctx.font = opts.font_size + "px Arial";
+
+            var middle = (y_pos + opts.block_height + y_blocks) / 2
+            for (var i = 0; i < classes; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = opts.scale_colors[i];
+                ctx.fillRect(x_blocks[i], y_blocks,
+                    end_of_scale - x_blocks[i],
+                    opts.block_height);
+                ctx.closePath();
+                ctx.fillStyle = pickTextColorBasedOnBgColorAdvanced(opts.scale_colors[i], 'white', 'black');
+                ctx.fillText(opts.labels[i],
+                    (x_blocks[i + 1] + x_blocks[i]) / 2, middle);
+            }
+
+            ctx.textBaseline = "bottom";
+            ctx.fillStyle = 'black';
+            ctx.strokeStyle = "#040404";
+
+            let values = 0.0;
+            let ratio = 1;
+            for (var i = 0; i <= classes; i++) {
+                if (opts.plot_label) {
+                    if (i === classes) {
+                        ctx.fillText("1.0", x_blocks[i], y_blocks);
+                    } else {
+                        ctx.fillText(trunc(values, 3), x_blocks[i], y_blocks);
+                    }
+                    ratio /= 2;
+                    values += ratio;
+                }
+
+                if (opts.plot_borders) {
+                    ctx.beginPath();
+                    ctx.moveTo(x_blocks[i], y_pos);
+                    ctx.lineTo(x_blocks[i], opts.block_height + y_blocks);
+                    ctx.stroke();
+                }
+            }
+
+            if (opts.plot_borders) {
+                for (var i = 0; i < 2; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x_pos, i * opts.block_height + y_blocks);
+                    ctx.lineTo(end_of_scale, i * opts.block_height + y_blocks);
+                    ctx.stroke();
+                }
+            }
+
+            return {
+                left: x_pos,
+                right: end_of_scale,
+                top: y_pos,
+                bottom: opts.block_height + y_blocks
+            }
+        }
+
+        function plot_mark(ctx, label, opts = undefined) {
+            if (typeof (opts) === "undefined") {
+                opts = {}
+            }
+            if (!('x_shift' in opts)) {
+                opts.x_shift = 0;
+            }
+            if (!('y_shift' in opts)) {
+                opts.y_shift = 0;
+            }
+            if (!('mark_size' in opts)) {
+                opts.mark_size = 5;
+            }
+            if (!('font_size' in opts)) {
+                opts.font_size = 15;
+            }
+            if (!('font' in opts)) {
+                opts.font = 'Arial';
+            }
+
+            var max_y = opts.y_shift + 2 * Math.sin(Math.PI / 3) * opts.mark_size;
+
+            ctx.beginPath();
+            ctx.moveTo(opts.x_shift, opts.y_shift);
+            ctx.lineTo(opts.x_shift + opts.mark_size, max_y);
+            ctx.lineTo(opts.x_shift - opts.mark_size, max_y);
+            ctx.closePath();
+
+            ctx.fillStyle = "#000000";
+            ctx.fill();
+
+            ctx.textBaseline = "top";
+            ctx.textAlign = "center";
+            ctx.font = opts.font_size + "px " + opts.font;
+            ctx.fillText(label, opts.x_shift, max_y + 5);
+        }
+
+        /* The following functions are used to present 
+           a confusion matrix */
+        function generateMatrixHead(table, rates, classifiers, with_total = false) {
+            let thead = table //.createTHead();
+            let row = thead.insertRow();
+            let td = document.createElement("td");
+            row.appendChild(td);
+            td = document.createElement("td");
+            row.appendChild(td);
+            let th = document.createElement("th");
+            th.colSpan = rates.length;
+            let text = document.createTextNode(classifiers[1]);
+            th.appendChild(text);
+            row.appendChild(th);
+            row = thead.insertRow();
+            td = document.createElement("td");
+            row.appendChild(td);
+            th = document.createElement("th");
+            text = document.createTextNode("Classes");
+            th.appendChild(text);
+            row.appendChild(th);
+            for (var x = 0; x < rates.length; x++) {
+                let th = document.createElement("th");
+                let text = document.createTextNode(rates[x]);
+                th.appendChild(text);
+                row.appendChild(th);
+            }
+            if (with_total) {
+                let th = document.createElement("th");
+                th.classList.add("totals");
+                let text = document.createTextNode("Total");
+                th.appendChild(text);
+                row.appendChild(th);
+            }
+        }
+
+        function presentMatrix(A, rates = undefined, classifiers = undefined, with_total = true) {
+            if (rates === undefined) {
+                rates = [...Array(A.length).keys()];
+            }
+            if (classifiers === undefined) {
+                classifiers = ["Classifier X", "Classifier Y"];
+            }
+
+            let table = document.createElement("table");
+            table.className = "confusion-matrix";
+
+            generateMatrixHead(table, rates, classifiers, with_total);
+
+            let tbody = table //.createTBody();
+            var col_total = [];
+            for (var x = 0; x < A.length; x++) {
+                col_total[x] = 0;
+            }
+
+            for (var y = 0; y < A.length; y++) {
+                let row = tbody.insertRow();
+                let th = document.createElement("th");
+                var text;
+                if (y == 0) {
+                    th.rowSpan = rates.length;
+                    let div = document.createElement("div");
+                    text = document.createTextNode(classifiers[0]);
+                    div.appendChild(text);
+                    th.appendChild(div);
+                    row.appendChild(th);
+                    th = document.createElement("th");
+                }
+                text = document.createTextNode(rates[y]);
+                th.appendChild(text);
+                row.appendChild(th);
+                var row_total = 0;
+                for (var x = 0; x < A.length; x++) {
+                    let cell = row.insertCell();
+                    //cell.style.textAlign = "center";
+                    text = document.createTextNode(A[y][x]);
+                    cell.appendChild(text);
+                    row_total += A[y][x];
+                    col_total[x] += A[y][x];
+                }
+                if (with_total) {
+                    let cell = row.insertCell();
+                    cell.classList.add("totals");
+                    text = document.createTextNode(row_total);
+                    cell.appendChild(text);
+                }
+            }
+            if (with_total) {
+                var total = 0;
+                let row = tbody.insertRow();
+                row.classList.add("totals");
+                let td = document.createElement("td");
+                row.appendChild(td);
+                let th = document.createElement("th");
+                text = document.createTextNode("Total");
+                th.appendChild(text);
+                row.appendChild(th);
+                for (var x = 0; x < A.length; x++) {
+                    let cell = row.insertCell();
+                    text = document.createTextNode(col_total[x]);
+                    cell.appendChild(text);
+                    total += col_total[x];
+                }
+                let cell = row.insertCell();
+                text = document.createTextNode(total);
+                cell.appendChild(text);
+            }
+
+            return table;
+        }
+
+        /* These function are used to present some matrix-based examples
+           (actually, most of those in "Beyond Kappa: An Informational 
+            Index for Diagnostic Agreement in Dichotomous and Multi-value 
+            Ordered-Categorical Ratings") */
+
+        function processExample(A, tag) {
+            let table = document.createElement("table");
+            let row = table.insertRow();
+            let cell = row.insertCell();
+            cell.appendChild(presentMatrix(A));
+            cell = row.insertCell();
+            cell.appendChild(document.createTextNode("has IA* equal to " + IAstar(A).toFixed(3)));
+            tag.appendChild(table);
+            tag.appendChild(document.createElement("br"));
+        }
+
+        function matrix_test() {
+
+            var p = document.getElementById("examples");
+
+            var A = [[100, 0], [0, 100]];
+            processExample(A, p)
+
+            A = [[3600, 2595], [65, 3740]]
+            processExample(A, p)
+
+            A = [[9901, 64], [2, 33]]
+            processExample(A, p)
+
+            A = [[9900, 86], [1, 13]]
+            processExample(A, p)
+
+            A = [[21, 5], [3, 21]]
+            processExample(A, p)
+
+            A = [[40, 5], [3, 2]]
+            processExample(A, p)
+
+            A = [[40, 2], [3, 5]]
+            processExample(A, p)
+
+            A = [[51, 4, 0, 1, 1],
+            [3, 78, 1, 0, 0],
+            [0, 0, 13, 4, 0],
+            [0, 1, 1, 16, 7],
+            [0, 0, 0, 0, 5]]
+            processExample(A, p)
+
+            A = [[136, 3], [1, 46]]
+            processExample(A, p);
+
+        }
+
+        function selectTab(evt, tabName, level = "") {
+            var tabcontent = document.getElementsByClassName("tabcontent" + level);
+            for (var i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+
+            tablinks = document.getElementsByClassName("tablinks" + level);
+            for (var i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        /* The following functions are meant to parse the text area 
+           and build-up the confusion matrix */
+
+
+        function removeComments(line) {
+            return line.split(/\s*#/)[0];
+        }
+
+        function parseData(tagID, has_classifiers = false) {
+            var D = [];
+
+            var lines = document.getElementById(tagID).value.split('\n');
+
+            var i = 0;
+            var R;
+            if (has_classifiers) {
+                i++;
+
+                linedata = removeComments(lines[0]).split(/\s+/);
+                R = [linedata[0], linedata[1]];
+            } else {
+                R = ["Classifier X", "Classifier Y"];
+            }
+
+            var col = undefined;
+            for (; i < lines.length; i++) {
+                var linedata = removeComments(lines[i]).split(/\s+/);
+                if (linedata.length > 0 && (linedata.length > 1 || linedata[0] !== "")) {
+                    if (col === undefined) {
+                        col = linedata.length;
+                    } else {
+                        if (linedata.length !== col) {
+                            throw SyntaxError('The dataset is not properly formatted: lines 1 and ' +
+                                (i + 1) + ' have a different number of columns.');
+                        }
+                    }
+                    D[D.length] = linedata;
+                }
+            }
+
+            return { table: D, classifiers: R };
+        }
+
+        function parseAMatrix(tagID, has_classifiers = false, first_line = false,
+            first_column = false) {
+            var data = [];
+
+            var lines = document.getElementById(tagID).value.split('\n');
+
+            var vshift = 0;
+            var hshift = 0;
+            var col = undefined;
+
+            var C = [];
+            if (first_column) {
+                hshift = 1;
+            }
+
+            var R = [];
+            if (has_classifiers) {
+                vshift = 1;
+
+                linedata = removeComments(lines[0]).split(/\s+/);
+                R = [linedata[0], linedata[1]];
+            } else {
+                R = ["Classifier X", "Classifier Y"];
+            }
+
+            if (first_line) {
+                line = removeComments(lines[vshift]).split(/\s+/);
+                var empty = 0;
+                for (var j = 0; j + hshift < line.length; j++) {
+                    if (line[j + hshift] != "") {
+                        C[j - empty] = line[j + hshift];
+                    } else {
+                        empty++;
+                    }
+                }
+
+                vshift++;
+
+                col = C.length;
+            }
+
+            A = [];
+            for (var i = 0; i + vshift < lines.length; i++) {
+                line = removeComments(lines[i + vshift]).split(/\s+/);
+
+                if (first_column) {
+                    if (first_line) {
+                        if (line[0] != C[i]) {
+                            throw SyntaxError('The column and row num.' + i +
+                                ' correspond to two different ' +
+                                'rates \"' + line[0] +
+                                '\" and \"' + C[i] +
+                                '\", respectively');
+                        }
+                    } else {
+                        C[i] = line[0];
+                    }
+                }
+
+                var empty = 0;
+                var linedata = [];
+                for (var j = 0; j + hshift < line.length; j++) {
+                    if (line[j + hshift] != "") {
+                        linedata[j - empty] = parseInt(line[j + hshift]);
+                    } else {
+                        empty++;
+                    }
+                }
+                if (col === undefined) {
+                    col = linedata.length;
+                    if (!first_column) {
+                        C = [...Array(col).keys()];
+                    }
+                } else {
+                    if (linedata.length !== col) {
+                        throw SyntaxError('The dataset is not properly formated: lines 1 and ' +
+                            (i + 1) + ' have a different number of columns.');
+                    }
+                }
+
+                A[i] = linedata;
+            }
+
+            return {
+                matrix: A,
+                rates: C,
+                classifiers: R
+            };
+        }
+
+        function buildAMatrix(data) {
+            var dict = {};
+            var dsize = 0;
+
+            for (var i = 0; i < data.table.length; i++) {
+                values = data.table[i];
+                if (values.length != 2) {
+                    throw EvalError('Currently, this tool only supports 2-classifier datasets');
+                }
+                for (var j = 0; j < values.length; j++) {
+                    if (!(values[j] in dict)) {
+                        dict[values[j]] = dsize;
+                        dsize++;
+                    }
+                }
+            }
+
+            var A = []
+            for (var y = 0; y < dsize; y++) {
+                A[y] = new Array(dsize);
+                for (var x = 0; x < dsize; x++) {
+                    A[y][x] = 0;
+                }
+            }
+
+            var sorted = [];
+            for (var key in dict) {
+                sorted[sorted.length] = key;
+            }
+
+            sorted.sort();
+            for (var i = 0; i < sorted.length; i++) {
+                dict[sorted[i]] = i;
+            }
+
+            for (var i = 0; i < data.table.length; i++) {
+                X_rate = data.table[i][0];
+                Y_rate = data.table[i][1];
+                A[dict[X_rate]][dict[Y_rate]]++;
+            }
+
+            var C = [];
+            for (var key in dict) {
+                C[dict[key]] = key;
+            }
+
+            return {
+                matrix: A,
+                rates: C,
+                classifiers: data.classifiers
+            };
+        }
+
+        function switchClassDisplay(className, display) {
+            var lst = document.getElementsByClassName(className);
+            for (var i = 0; i < lst.length; ++i) {
+                lst[i].style.display = display ? '' : 'none';
+            }
+        }
+
+        function switchMatrixHeader(header_checked) {
+            var label = document.getElementById("matrix_first_line_label");
+            label.innerHTML = ("The " + (header_checked ? "2nd" : "1st") +
+                " line contains rates");
+        }
+
+        function binarySearch(A, value) {
+            var lower = 0, upper = A.length - 1;
+
+            if (A[upper] <= value) {
+                return upper;
+            }
+
+            while (lower + 1 < upper) {
+                if (A[lower] == value) {
+                    return lower;
+                }
+
+                var middle = Math.trunc((upper + lower) / 2);
+                if (A[middle] <= value) {
+                    lower = middle;
+                } else {
+                    upper = middle;
+                }
+            }
+
+            if (A[upper] >= value) {
+                return upper;
+            }
+            return lower;
+        }
+
+        function get_ordinal(num) {
+            var last_digits = (num % 100);
+
+            if (last_digits > 10 && last_digits < 13) {
+                return num + "th";
+            }
+
+            last_digits = last_digits % 10;
+
+            if (last_digits == 1) {
+                return num + "st";
+            }
+            if (last_digits == 2) {
+                return num + "nd";
+            }
+            if (last_digits == 3) {
+                return num + "rd";
+            }
+            return num + "th";
+        }
+
+        function workerDone(e) {
+            in_set += e.data.in_set;
+            samples_collected += e.data.num_of_samples;
+
+            updateProgressBar(samples_collected * 100 / numOfSamples);
+            if (samples_collected === numOfSamples) {
+                var rho = in_set / samples_collected;
+
+                document.getElementById("varrho").innerHTML = (rho.toFixed(3)).toString()
+
+                var cv = document.getElementById('significativity_scale'),
+                    ctx = cv.getContext('2d');
+                ctx.imageSmoothingEnabled = false;
+                ctx.imageSmoothingQuality = 'high';
+
+                ctx.clearRect(0, 0, cv.width, cv.height);
+
+                var plot_pos = plot_scale(ctx,
+                    {
+                        labels: scale_labels,
+                        font_size: 13,
+                        scale_colors: ['#faf3ddff',
+                            '#c8d5b9ff',
+                            '#8fc0a9ff',
+                            '#68b0abff',
+                            '#696d7dff']
+                                    /*scale_colors: ['#ef476fff',
+                                                    '#ffd166ff',
+                                                    '#06d6a0ff',
+                                                    '#118ab2ff',
+                                                    '#073b4cff']*/})
+
+                var mark_value = (rho === 1 ? 1 : Math.min(1, -Math.log2(1 - rho) / scale_labels.length));
+                var mark_pos = plot_pos.left + (plot_pos.right - plot_pos.left) * mark_value;
+
+                plot_mark(ctx, (sigma_value.toFixed(3)).toString(),
+                    {
+                        mark_size: 5, x_shift: mark_pos,
+                        y_shift: plot_pos.bottom, font_size: 15
+                    });
+
+                clearInterval(timerInterval);
+                document.getElementById("overlay").style.display = "none";
+
+                document.getElementById("varrho_paragraph").hidden = false;
+                document.getElementById("significativity_scale").hidden = false;
+            } else {
+                if (num_of_batches*samples_per_batch<numOfSamples) {
+                    ++num_of_batches;
+                    worker.postMessage({
+                        "sigma_name": sigma_name,
+                        "sigma_value": sigma_value,
+                        "matrix_size": matrix_size,
+                        "num_of_tests": num_of_tests,
+                        "num_of_samples": Math.min(samples_per_batch, numOfSamples-samples_collected)
+                    });
+                }
+            }
+        }
+
+        function evaluateStatCoefficient() {
+            let cell = document.getElementById("am_cell");
+
+            try {
+                if (document.getElementById("matrix").checked) {
+                    AMatrix = parseAMatrix("data_text",
+                        document.getElementById("matrix_header").checked,
+                        document.getElementById("matrix_first_line").checked,
+                        document.getElementById("matrix_first_col").checked);
+                } else {
+                    data = parseData("data_text", document.getElementById("matrix_header").checked);
+                    AMatrix = buildAMatrix(data);
+                }
+
+                if (AMatrix.rates.length == 0) {
+                    throw SyntaxError('The dataset text area is empty.');
+                }
+
+                cell.innerHTML = "";
+
+                switchClassDisplay("when_matrix", true);
+
+                cell.appendChild(presentMatrix(AMatrix.matrix, AMatrix.rates, AMatrix.classifiers));
+
+                switchClassDisplay("totals", document.getElementById('total_in_matrix').checked);
+            } catch (error) {
+                alert(error.message);
+
+                document.getElementById("overlay").style.display = "none";
+
+                return;
+            }
+
+            document.getElementById("varrho_paragraph").hidden = true;
+            document.getElementById("significativity_scale").hidden = true;
+            document.getElementById("sigma_paragraph").hidden = false;
+
+            var e = document.getElementById("sigma_selector");
+            sigma_name = e.value;
+
+            var elements = document.querySelectorAll('.sigma_name');
+            elements.forEach(function(element){
+                element.innerHTML = sigma_name;
+            });
+
+            sigma_value = sigmas[sigma_name](AMatrix.matrix);
+            matrix_size = AMatrix.matrix.length;
+            num_of_tests = sumMatrix(AMatrix.matrix);
+
+            var elements = document.querySelectorAll('.sigma_value');
+            elements.forEach(function(element){
+                element.innerHTML = (sigma_value.toFixed(3)).toString();
+            });
+
+            let matrix_class = katex.renderToString("M_{"
+                + matrix_size + "," + num_of_tests + "}", {
+                throwOnError: false
+            });
+            var elements = document.querySelectorAll('.matrix_class');
+            elements.forEach(function(element){
+                element.innerHTML = matrix_class;
+            });
+
+            in_set = 0;
+            samples_collected = 0;
+            for (num_of_batches = 0; num_of_batches < num_of_workers; ++num_of_batches) {
+                let num_of_samples = numOfSamples-num_of_batches*samples_per_batch;
+
+                if (num_of_samples>0) {
+                    worker = new Worker("js/worker.js");
+                    worker.onmessage = workerDone;
+
+                    worker.postMessage({
+                        "sigma_name": sigma_name,
+                        "sigma_value": sigma_value,
+                        "matrix_size": AMatrix.matrix.length,
+                        "num_of_tests": num_of_tests,
+                        "num_of_samples": Math.min(samples_per_batch, num_of_samples)
+                    });
+                }
+            }
+        }
+
+        function compute() {
+            document.getElementById("overlay").style.display = "flex";
+            startTime = new Date();
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+
+            updateProgressBar(0);
+
+            evaluateStatCoefficient();
+        }
+
+        example = {
+            matrix: [[990, 64, 0], [2, 33, 43], [0, 25, 4]],
+            rates: ["Good", "Fair", "Bad"],
+            classifiers: ["Tool_A", "Tool_B"]
+        }
+
+        function randomlySelectCell(A) {
+            var nrand = Math.floor(sumMatrix(A) * Math.random());
+
+            for (var y = 0; y < A.length; y++) {
+                const row = A[y];
+                for (var x = 0; x < row.length; x++) {
+                    if (nrand < row[x]) {
+                        return { "x": x, "y": y }
+                    }
+                    nrand -= row[x];
+                }
+            }
+        }
+
+        function copyMatrix(A) {
+            var B = [];
+            for (var y = 0; y < A.length; y++) {
+                B[y] = [...A[y]];
+            }
+
+            return B;
+        }
+
+        function dataExample(include_classifiers = false) {
+            document.getElementById("defaultTab").click();
+
+            var data_text = document.getElementById("data_text");
+            data_text.value = "";
+
+            var spacing = 4;
+            if (include_classifiers) {
+
+                var string = (example.classifiers.join(" ") +
+                    " ".repeat(spacing));
+                spacing = string.length;
+                data_text.value += (string + "# This line " +
+                    "contains the classifier names" +
+                    "\n");
+            }
+            var matrix = copyMatrix(example.matrix);
+
+            var rows = sumMatrix(matrix);
+            for (var i = 0; i < rows; i++) {
+                if (i > 0) {
+                    data_text.value += "\n";
+                }
+                var cell = randomlySelectCell(matrix);
+                var string = (example.rates[cell.x] + " " +
+                    example.rates[cell.y]);
+                data_text.value += string;
+
+                if (i == 0) {
+                    spacing = Math.max(spacing - string.length, 4);
+                    data_text.value += (" ".repeat(spacing) +
+                        "# Every data line contains the " +
+                        "evaluations for a subject");
+                }
+                matrix[cell.y][cell.x]--;
+            }
+
+            /*
+            data_text.value += ("1  1\n1  1\n1  1\n1  1\n1  1\n2  2\n2  2\n" +
+                                "2  2\n2  2\n2  2\n3  3\n3  3\n3  3\n3  3\n" +
+                                "3  3\n1  2\n1  3\n1  3\n1  2\n1  2\n2  1\n" +
+                                "2  3\n2  3\n2  1\n2  1\n3  1\n3  2\n3  1\n" +
+                                "3  2\n3  2");
+            */
+
+            document.getElementById("matrix").checked = false;
+            document.getElementById("matrix_header").checked = include_classifiers;
+
+            switchClassDisplay("matrix_only", false);
+
+            compute();
+        }
+
+        function matrixExample(include_classifiers = false, first_line = false, first_col = false) {
+            document.getElementById("defaultTab").click();
+
+            var data_text = document.getElementById("data_text");
+
+            data_text.value = "";
+            var spacing = 10;
+            if (include_classifiers) {
+                var string = (example.classifiers.join(" ") +
+                    " ".repeat(spacing));
+                spacing = string.length;
+                data_text.value += (string + "# This line " +
+                    "contains the classifier names" +
+                    "\n");
+            }
+
+            var first_line_length = 0;
+
+            if (first_col) {
+                if (first_line) {
+                    var string = "Classes ";
+                    first_line_length += string.length;
+
+                    data_text.value += string;
+                }
+            }
+
+            if (first_line) {
+                var string = example.rates.join(" ");
+                first_line_length += string.length;
+                spacing = Math.max(spacing, first_line_length + 4);
+                data_text.value += (string +
+                    " ".repeat(spacing - first_line_length) +
+                    "# This line reports the " +
+                    "evaluation classes");
+            }
+
+            for (var i = 0; i < example.matrix.length; i++) {
+                if (i > 0 || first_line) {
+                    data_text.value += "\n";
+                }
+                data_text.value += ((first_col ? example.rates[i] + " " : "") +
+                    example.matrix[i].join(" "));
+            }
+
+            document.getElementById("matrix").checked = true;
+            switchClassDisplay("matrix_only", true);
+
+            document.getElementById("matrix_header").checked = include_classifiers;
+            switchMatrixHeader(include_classifiers);
+            document.getElementById("matrix_first_line").checked = first_line;
+            document.getElementById("matrix_first_col").checked = first_col;
+
+            compute();
+        }
+
+        const matrix_chk = document.getElementById('matrix')
+        switchClassDisplay("matrix_only", matrix_chk.checked);
+        matrix_chk.addEventListener('change', (event) => {
+            switchClassDisplay("matrix_only", event.target.checked);
+        })
+
+        const header_chk = document.getElementById('matrix_header')
+        switchMatrixHeader(header_chk.checked);
+        header_chk.addEventListener('change', (event) => {
+            switchMatrixHeader(event.target.checked);
+        })
+
+        const total_in_matrix = document.getElementById('total_in_matrix')
+        switchClassDisplay("when_matrix", false);
+        total_in_matrix.addEventListener('change', (event) => {
+            switchClassDisplay("totals", event.target.checked);
+        })
+
+        document.getElementById("defaultTab").click();
+
+        let select = document.getElementById('sigma_selector');
+        for (var key in sigmas) {
+            if (sigmas.hasOwnProperty(key)) {
+                let option = document.createElement('option');
+                option.textContent = key;
+                option.value = key;
+                select.appendChild(option);
+            }
+        }
+
+
+    </script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+</body>
+
+</html>
