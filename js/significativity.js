@@ -23,31 +23,39 @@ class WeakCompositions {
 
     composition(idx) {
         let b_idx = new BigNumber(idx);
-        let wComposition = new Array(this.parts).fill(0);
+        let ell = new Array(this.parts).fill(0);
 
-        let n = wComposition.length - 1;
-        let k = this.m;
-        let wIt = 0;
-        while (n > 0 && k > 0) {
-            let i = 0;
-            let classSize = binCoeff(n + (k - i) - 1, k - i);
-            while (classSize.lte(b_idx) && i < k) {
-                b_idx = b_idx.minus(classSize);
-                i++;
-                classSize = binCoeff(n + (k - i) - 1, k - i);
+        let k = ell.length;
+        let m = this.m;
+        let C = binCoeff(m + k - 2, m)
+
+        while (m > 0 && k > 1) {
+            let ml = m;
+            let loop_cond = b_idx.gte(C);
+            while (loop_cond) {
+                b_idx = b_idx.minus(C);
+
+                loop_cond = false;
+                if (m>0) {
+                    let B = (C.times(m)).div(m+k-2);
+                    if (b_idx.gte(B)) {
+                        C = B;
+                        m = m-1;
+                        loop_cond = true;
+                    }
+                }
             }
-            wComposition[wIt] = i;
-            n--;
-            k -= i;
-            wIt++;
+            ell[ell.length-k] = ml-m;
+            k = k-1;
+            C = (C.times(k-1)).div(m+k-1);
         }
-        wComposition[wIt] = k;
+        ell[ell.length-1] = m;
 
         if (b_idx.gt(0)) {
             throw new Error("Index out-of-range");
         }
 
-        return wComposition;
+        return ell;
     }
 
     getParts() {
